@@ -96,7 +96,7 @@ def map_entry_to_summary_dict(entry: dict, first_party_domain: str) -> dict:
     return summary_dict
 
 
-def produce_dict(har_content: list[dict], first_party_domain: str) -> dict:
+def produce_json(har_content: list[dict], first_party_domain: str) -> dict:
     result_dict = {}
     result_dict['num_reqs'] = len(har_content)
     result_dict['num_requests_w_cookies'] = len(list(filter(lambda entry: entry_has_header(entry, 'request', 'cookie'), har_content)))
@@ -114,8 +114,8 @@ def write_json_file(path: str, content: dict):
     
 
 def main():
-    write_json_file(accept_json_file, produce_dict(accept_list, domain_name))
-    write_json_file(reject_json_file, produce_dict(reject_list, domain_name))
+    write_json_file(accept_json_file, produce_json(accept_list, domain_name))
+    write_json_file(reject_json_file, produce_json(reject_list, domain_name))
 
 if __name__ == '__main__':
     main()
