@@ -3,12 +3,19 @@ import datetime
 import email.utils
 from tld import get_fld, get_tld, get_tld_names
 
+domain_name = 'zalando.nl'
+accept_har_file = domain_name+'_accept.har'
+reject_har_file = domain_name+'_reject.har'
+accept_json_file = domain_name+'_accept.json'
+reject_json_file = domain_name+'_reject.json'
+
 def read_json_file(filepath: str) -> list[dict]:
     with open(filepath, 'r') as json_file:
         return json.load(json_file)
 
-accept_list = read_json_file('zalando.nl_accept.har')['log']['entries']
-reject_list = read_json_file('zalando.nl_reject.har')['log']['entries']
+
+accept_list = read_json_file(accept_har_file)['log']['entries']
+reject_list = read_json_file(reject_har_file)['log']['entries']
 domain_map = read_json_file('domain_map.json')
 
 def entry_has_header(entry: dict, entry_component: str, header_name: str) -> bool:
@@ -26,18 +33,23 @@ def is_third_party( entry: dict, first_party_domain: str) -> bool:
     return first_party_domain != get_fld(entry['request'].get('url'))
 
 
-def is_age_greater_than(cookie: str, min_age_in_days: int) -> bool:
-    cookie_attrs = {x[0]: x[1] if(len(x) == 2) else x[0] for x in map(lambda x: x.strip().lower().split('='), cookie.split(';'))}
+def get_cookie_attrs_as_dict(cookie: str) -> dict:
+    return {x[0]: x[1] if(len(x) == 2) else x[0] for x in map(lambda x: x.strip().lower().split('='), cookie.split(';'))}
+
+
+def is_cookie_age_greater_than(cookie: str, min_age_in_days: int) -> bool:
+    cookie_attrs = get_cookie_attrs_as_dict(cookie)
+    max_age = cookie_attrs.get('max-age')
     
-    if datetime.timedelta(seconds=int(cookie_attrs.get('max-age',0))).days >= min_age_in_days:
+    if max_age != None and datetime.timedelta(seconds=int(max_age)).days >= min_age_in_days:
         return True
     
     # In order for this script to keep working in the future, we'll compare the expiration date of the cookie 
     # to the date when the data was collected, instead of comparing it with `datetime.datetime.today()
     date_of_collection = datetime.datetime(year=2024, month=2, day=28,tzinfo=datetime.timezone.utc)
-    expiration_date = email.utils.parsedate_to_datetime(cookie_attrs.get('expires'))
+    expires = cookie_attrs.get('expires')
     
-    if (expiration_date - date_of_collection).days >= min_age_in_days:
+    if expires != None and (email.utils.parsedate_to_datetime(expires) - date_of_collection).days >= min_age_in_days:
         return True
     
     return False
@@ -45,7 +57,7 @@ def is_age_greater_than(cookie: str, min_age_in_days: int) -> bool:
 
 def has_tracking_cookies(entry: dict):
     for header in entry['response']['headers']:
-        if header.get('name') == 'set-cookie' and 'samesite=none' in header.get('value').lower() and is_age_greater_than(header.get('value'), 60):
+        if header.get('name') == 'set-cookie' and 'samesite=none' in header.get('value').lower() and is_cookie_age_greater_than(header.get('value'), 60):
             return True
     return False
 
@@ -62,14 +74,14 @@ def map_entry_to_entity_name(entry: dict) -> str:
     entry_fld = map_entry_to_fld(entry)
     entity_dict = domain_map.get(entry_fld)
 
-    # In my HAR file I found a URL that yielded a wrong fld, when I used `get_tld()` instead of `get_fld()`
+    # In my HAR file I found a URL that yielded a wrong fld. When I used `get_tld()` instead of `get_fld()`
     # I got the correct match for the entity name. In principle, using the `get_tld()` method should not
-    # be a problem, since that in the cases where it returns `co.uk` for instance, it will not match with
+    # be a problem, since that in the cases where it returns a tld, e.g. `co.uk`, it will not match with
     # any entry in the domain_map file
     if entity_dict == None:
         entity_dict = domain_map.get(map_entry_to_tld(entry))
 
-    return entity_dict.get('entityName', 'unknown')
+    return entity_dict.get('entityName', 'unknown') if entity_dict != None else 'unknown'
 
 
 def map_entry_to_summary_dict(entry: dict, first_party_domain: str) -> dict:
@@ -82,7 +94,8 @@ def map_entry_to_summary_dict(entry: dict, first_party_domain: str) -> dict:
     summary_dict['entity_name'] = map_entry_to_entity_name(entry)
 
     return summary_dict
-    
+
+
 def produce_dict(har_content: list[dict], first_party_domain: str) -> dict:
     result_dict = {}
     result_dict['num_reqs'] = len(har_content)
@@ -94,9 +107,15 @@ def produce_dict(har_content: list[dict], first_party_domain: str) -> dict:
     result_dict['requests'] = list(map(lambda entry: map_entry_to_summary_dict(entry, first_party_domain), har_content))
     return result_dict
 
+
+def write_json_file(path: str, content: dict):
+    with open(path, 'w') as json_file:
+        json.dump(content, json_file, indent=4)
+    
+
 def main():
-    accept_dict = produce_dict(accept_list, 'zalando.nl')
-    reject_dict = produce_dict(reject_list, 'zalando.nl')
+    write_json_file(accept_json_file, produce_dict(accept_list, domain_name))
+    write_json_file(reject_json_file, produce_dict(reject_list, domain_name))
 
 if __name__ == '__main__':
     main()
