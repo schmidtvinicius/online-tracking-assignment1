@@ -108,7 +108,7 @@ def produce_json(har_content: list[dict], first_party_domain: str) -> dict:
     return result_dict
 
 
-def write_json_file(path: str, content: dict):
+def write_json_file(path: str, content: dict) -> None:
     with open(path, 'w') as json_file:
         json.dump(content, json_file, indent=4)
     
