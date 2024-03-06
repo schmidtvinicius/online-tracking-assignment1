@@ -13,12 +13,16 @@ def read_json_file(filepath: str) -> list[dict]:
     with open(filepath, 'r') as json_file:
         return json.load(json_file)
 
-
+# For the HAR files, we are only interested in the `entries` array, which is what contains all request/response pairs.
+# From here every reference to an entry refers to a request/response pair 
 accept_list = read_json_file(accept_har_file)['log']['entries']
 reject_list = read_json_file(reject_har_file)['log']['entries']
 domain_map = read_json_file('domain_map.json')
 
 def entry_has_header(entry: dict, entry_component: str, header_name: str) -> bool:
+    """
+    Checks whether a request or response contains a specified header
+    """
     valid_entry_components = ('request', 'response')
     if entry_component not in valid_entry_components:
         raise RuntimeError(f'attr \'entry_component\' must be one of {valid_entry_components}')
@@ -29,11 +33,16 @@ def entry_has_header(entry: dict, entry_component: str, header_name: str) -> boo
     return False
 
 
-def is_third_party( entry: dict, first_party_domain: str) -> bool:
+def is_third_party(entry: dict, first_party_domain: str) -> bool:
     return first_party_domain != get_fld(entry['request'].get('url'))
 
 
 def get_cookie_attrs_as_dict(cookie: str) -> dict:
+    """
+    Converts a cookie string, e.g. receive-cookie-deprecation=1; Domain=doubleclick.net; Secure; HttpOnly; Path=/; SameSite=None; Partitioned; Max-Age=15552000
+    to a dictionary where the key is the name of the cookie attribute and the value is the value of the attribute. If the attribute
+    is its own value, e.g. Secure, then key and value are the same.
+    """
     return {x[0]: x[1] if(len(x) == 2) else x[0] for x in map(lambda x: x.strip().lower().split('='), cookie.split(';'))}
 
 
