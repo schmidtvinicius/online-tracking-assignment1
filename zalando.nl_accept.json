@@ -4,28 +4,28 @@
     "num_responses_w_cookies": 98,
     "third_party_domains": [
         "usabilla.com",
-        "facebook.com",
-        "doubleclick.net",
-        "ztat.net",
-        "google-analytics.com",
-        "google.com",
-        "googletagmanager.com",
         "google.nl",
-        "facebook.net",
+        "google.com",
+        "facebook.com",
         "d6tizftlrpuof.cloudfront.net",
         "googleadservices.com",
-        "usercentrics.eu"
+        "googletagmanager.com",
+        "google-analytics.com",
+        "facebook.net",
+        "usercentrics.eu",
+        "doubleclick.net",
+        "ztat.net"
     ],
     "tracker_cookie_domains": [
         "doubleclick.net"
     ],
     "third_party_entities": [
-        "Momentive Inc.",
         "Amazon Technologies, Inc.",
-        "Zalando SE",
+        "Google LLC",
         "Facebook, Inc.",
         "Usercentrics GmbH",
-        "Google LLC"
+        "Zalando SE",
+        "Momentive Inc."
     ],
     "requests": [
         {

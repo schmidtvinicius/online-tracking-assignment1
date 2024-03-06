@@ -4,17 +4,17 @@
     "num_responses_w_cookies": 90,
     "third_party_domains": [
         "usabilla.com",
-        "ztat.net",
-        "gstatic.com",
         "google.com",
+        "gstatic.com",
         "googletagmanager.com",
-        "usercentrics.eu"
+        "usercentrics.eu",
+        "ztat.net"
     ],
     "tracker_cookie_domains": [],
     "third_party_entities": [
-        "Momentive Inc.",
-        "Zalando SE",
         "Usercentrics GmbH",
+        "Zalando SE",
+        "Momentive Inc.",
         "Google LLC"
     ],
     "requests": [
