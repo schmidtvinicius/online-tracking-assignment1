@@ -9,6 +9,7 @@ reject_har_file = domain_name+'_reject.har'
 accept_json_file = domain_name+'_accept.json'
 reject_json_file = domain_name+'_reject.json'
 
+
 def read_json_file(filepath: str) -> list[dict]:
     with open(filepath, 'r') as json_file:
         return json.load(json_file)
